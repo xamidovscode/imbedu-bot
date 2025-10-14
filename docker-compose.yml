@@ -3,7 +3,7 @@ version: "3.9"
 services:
   bot:
     build: .
-    container_name: imbedu-bot
+    container_name: fast-api
     restart: always
     env_file: .env
     ports:
