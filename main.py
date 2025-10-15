@@ -41,7 +41,7 @@ async def create_bot(token: str):
 
     # Unikal webhook path
     webhook_path = f"/webhook/{token}"
-    WEBHOOK_URL = f"https://yourdomain.com{webhook_path}"  # o'zingning domain
+    WEBHOOK_URL = f"https://joxacode.uz{webhook_path}"  # o'zingning domain
 
     # Webhookni o'rnatish
     await bot.set_webhook(WEBHOOK_URL)
