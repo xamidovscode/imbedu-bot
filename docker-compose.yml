@@ -1,8 +1,30 @@
+version: "3.9"
+
 services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: imbedu_bot
+      POSTGRES_USER: imbedu_bot
+      POSTGRES_PASSWORD: imbedu_bot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   bot:
     build: .
     container_name: fast-api
     restart: always
     env_file: .env
+    depends_on:
+      - db
     ports:
       - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://imbedu_bot:imbedu_bot@db:5432/imbedu_bot
+
+volumes:
+  postgres_data:
