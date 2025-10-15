@@ -1,46 +1,71 @@
 import os
-from contextlib import asynccontextmanager
+import asyncio
 from fastapi import FastAPI, Request
+from pydantic import BaseModel
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Update
-from aiogram.filters import Command
-from dotenv import load_dotenv
 
-load_dotenv()
+app = FastAPI(title="Dynamic Telegram Bots")
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-WEBHOOK_PATH = "/webhook"
+# Token -> (bot, dispatcher)
+bots = {}
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await bot.set_webhook(WEBHOOK_URL + WEBHOOK_PATH)
-    print(f"✅ Webhook o‘rnatildi: {WEBHOOK_URL + WEBHOOK_PATH}")
-    yield
+# Model tokenni qabul qilish uchun
+class BotTokenSchema(BaseModel):
+    token: str
+
+
+# Foydalanuvchi token yuborgan endpoint
+@app.post("/start-bot")
+async def start_bot(data: BotTokenSchema):
+    token = data.token
+
+    if token in bots:
+        return {"ok": False, "msg": "Bot already started"}
+
+    bot, dp, webhook_path = await create_bot(token)
+    bots[token] = (bot, dp, webhook_path)
+    return {"ok": True, "webhook_path": webhook_path}
+
+
+# Dinamik bot yaratish funksiyasi
+async def create_bot(token: str):
+    bot = Bot(token=token)
+    dp = Dispatcher()
+
+    # Example handler: echo
+    @dp.message()
+    async def echo_handler(message: types.Message):
+        await message.answer(f"Siz yozdingiz: {message.text}")
+
+    # Unikal webhook path
+    webhook_path = f"/webhook/{token}"
+    WEBHOOK_URL = f"https://yourdomain.com{webhook_path}"  # o'zingning domain
+
+    # Webhookni o'rnatish
+    await bot.set_webhook(WEBHOOK_URL)
+
+    # Dinamik endpoint yaratish
+    @app.post(webhook_path)
+    async def webhook_handler(request: Request):
+        data = await request.json()
+        update = Update(**data)
+        await dp.feed_update(bot, update)
+        return {"ok": True}
+
+    return bot, dp, webhook_path
+
+
+# Foydalanuvchi barcha botlarni tozalash yoki stop qilish uchun (optional)
+@app.post("/stop-bot")
+async def stop_bot(data: BotTokenSchema):
+    token = data.token
+    if token not in bots:
+        return {"ok": False, "msg": "Bot not found"}
+
+    bot, dp, webhook_path = bots[token]
     await bot.delete_webhook()
-    print("🧹 Webhook o‘chirildi")
-
-app = FastAPI(lifespan=lifespan)
-
-@dp.message(Command("start"))
-async def start_cmd(message: types.Message):
-    await message.answer("Salom! Bot webhook orqali ishlayapti 🚀")
-
-@app.post(WEBHOOK_PATH)
-async def telegram_webhook(request: Request):
-    data = await request.json()
-    update = Update(**data)
-    await dp.feed_update(bot, update)
+    await bot.session.close()
+    bots.pop(token)
     return {"ok": True}
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
-
-
-
-
