@@ -7,16 +7,13 @@ from aiogram.types import Update
 
 app = FastAPI(title="Dynamic Telegram Bots")
 
-# Token -> (bot, dispatcher)
 bots = {}
 
 
-# Model tokenni qabul qilish uchun
 class BotTokenSchema(BaseModel):
     token: str
 
 
-# Foydalanuvchi token yuborgan endpoint
 @app.post("/start-bot")
 async def start_bot(data: BotTokenSchema):
     token = data.token
@@ -29,24 +26,19 @@ async def start_bot(data: BotTokenSchema):
     return {"ok": True, "webhook_path": webhook_path}
 
 
-# Dinamik bot yaratish funksiyasi
 async def create_bot(token: str):
     bot = Bot(token=token)
     dp = Dispatcher()
 
-    # Example handler: echo
     @dp.message()
     async def echo_handler(message: types.Message):
         await message.answer(f"Siz yozdingiz: {message.text}")
 
-    # Unikal webhook path
     webhook_path = f"/webhook/{token}"
     WEBHOOK_URL = f"https://joxacode.uz{webhook_path}"  # o'zingning domain
 
-    # Webhookni o'rnatish
     await bot.set_webhook(WEBHOOK_URL)
 
-    # Dinamik endpoint yaratish
     @app.post(webhook_path)
     async def webhook_handler(request: Request):
         data = await request.json()
@@ -57,7 +49,6 @@ async def create_bot(token: str):
     return bot, dp, webhook_path
 
 
-# Foydalanuvchi barcha botlarni tozalash yoki stop qilish uchun (optional)
 @app.post("/stop-bot")
 async def stop_bot(data: BotTokenSchema):
     token = data.token
