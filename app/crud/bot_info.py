@@ -1,5 +1,5 @@
 from sqlalchemy.future import select
-from sqlalchemy import insert, delete
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.bot_info import BotInfo
 
