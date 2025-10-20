@@ -8,9 +8,10 @@ import os
 router = APIRouter(prefix="/bots", tags=["Bots"])
 DOMAIN = os.getenv("DOMAIN")
 
-@router.post("/start")
+@router.post("/create")
 async def start_bot(body: BotTokenSchema):
     token = body.token.strip()
+
     if not token:
         return {"error": "token required"}
 
