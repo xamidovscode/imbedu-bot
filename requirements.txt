@@ -7,6 +7,6 @@ requests>=2.31
 python-dotenv>=1.0
 asyncpg==0.30.0
 SQLAlchemy==2.0.44
-
+pydantic-settings==2.11.0
 
 
