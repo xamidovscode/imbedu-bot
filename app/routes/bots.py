@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.schemas.bot_info import BotTokenSchema
 from app.services.bot_service import create_bot, remove_bot_token
 from app.core.db import async_session_maker
-from app.crud.bot_info import add_token
+from app.crud.bot_info import add_token, remove_token
 import os
 
 router = APIRouter(prefix="/bots", tags=["Bots"])
@@ -34,6 +34,10 @@ async def remove_bot(body: BotTokenSchema):
 
     if "error" in result:
         return result
+
+    async with async_session_maker() as session:
+        await remove_token(session, token)
+
     return result
 
 

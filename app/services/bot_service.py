@@ -35,7 +35,6 @@ async def create_bot(token: str):
         await bot.set_webhook(webhook_url)
 
         bots[token] = {"bot": bot, "dp": dp}
-        print(f"✅ Bot ishga tushdi: {webhook_url}")
         return {"status": "started", "webhook": webhook_url}
 
     except TelegramUnauthorizedError:
@@ -62,7 +61,7 @@ async def remove_bot_token(token: str):
             await bot.delete_webhook(drop_pending_updates=True)
         except Exception:
             pass
-
+        bots.pop(token)
         return {"status": "removed"}
 
     except TelegramUnauthorizedError:
@@ -75,25 +74,20 @@ async def remove_bot_token(token: str):
 
 async def handle_webhook(token: str, data: dict):
     if token not in bots:
-        print("❌ Bot not registered:", token)
         return {"error": "Bot not registered"}
 
     bot = bots[token]["bot"]
     dp = bots[token]["dp"]
 
     try:
-        print(f"📨 Webhook received for token: {token[:10]}..., payload keys: {list(data.keys())}")
         update = Update(**data)
 
         if hasattr(dp, "update") and hasattr(dp.update, "update"):
             await dp.update.update(bot=bot, update=update)
-            print("✅ Update processed via dp.update.update()")
         else:
             await dp.feed_update(bot, update)
-            print("✅ Update processed via dp.feed_update()")
 
         return {"ok": True}
     except Exception as e:
-        print("❌ Exception while processing update:", e)
         traceback.print_exc()
         return {"error": str(e)}
