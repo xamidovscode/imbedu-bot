@@ -6,7 +6,6 @@ from app.crud.bot_info import add_token
 import os
 
 router = APIRouter(prefix="/bots", tags=["Bots"])
-DOMAIN = os.getenv("DOMAIN")
 
 @router.post("/create")
 async def start_bot(body: BotTokenSchema):
@@ -15,7 +14,7 @@ async def start_bot(body: BotTokenSchema):
     if not token:
         return {"error": "token required"}
 
-    result = await create_bot(token, DOMAIN)
+    result = await create_bot(token)
     if "error" in result:
         return result
 
