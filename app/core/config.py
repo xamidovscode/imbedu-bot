@@ -1,7 +1,11 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv()
+class Settings(BaseSettings):
+    database_url: str
+    domain: str
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-DOMAIN = os.getenv("WEBHOOK_URL")
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+
