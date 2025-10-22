@@ -18,6 +18,9 @@ async def create_bot(token: str):
         bot = Bot(token=token)
         dp = Dispatcher()
 
+        CHANNEL_ID = 1
+        CHANNEL_LINK = 'https://t.me/imb_edu'
+
         dp.include_router(build_root_router())
 
         try:
