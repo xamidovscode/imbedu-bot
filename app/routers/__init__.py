@@ -3,5 +3,9 @@ from .start import build_start_router
 
 def build_root_router() -> Router:
     root = Router(name="root")
-    root.include_router(build_start_router())
+
+    CHANNEL_ID = 1
+    CHANNEL_LINK = 'https://t.me/imb_edu'
+
+    root.include_router(build_start_router(channel_id=CHANNEL_ID, channel_link=CHANNEL_LINK))
     return root

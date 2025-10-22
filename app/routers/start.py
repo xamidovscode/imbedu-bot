@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.enums import ChatMemberStatus
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from uuid import uuid4
-from typing import Union
+from typing import Union, Optional
 
 ChatRef = Union[int, str]
 
@@ -22,8 +22,8 @@ async def _is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
 def build_start_router(
     channel: ChatRef,
     channel_link: str,
-    check_button_text: str = "✅ Tekshirish",
-    join_button_text: str = "📢 Kanalga obuna bo‘lish",
+    check_button_text: Optional[str] = "✅ Tekshirish",
+    join_button_text: Optional[str] = "📢 Kanalga obuna bo‘lish",
 ) -> Router:
     r = Router(name=f"start_{uuid4().hex[:6]}")
     CH = channel
