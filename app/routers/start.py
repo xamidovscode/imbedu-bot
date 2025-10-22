@@ -53,6 +53,8 @@ def build_start_router(
         bot = cb.bot
         user_id = cb.from_user.id
 
+        print(cb.from_user.full_name)
+
         if not await _is_member(bot, CH, user_id):
             await cb.answer("Hali obuna bo‘lmagansiz. Avval kanalga qo‘shiling.", show_alert=True)
             kb = InlineKeyboardBuilder()
