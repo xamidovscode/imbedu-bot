@@ -9,8 +9,6 @@ bots: dict[str, dict] = {}
 
 async def register_handlers(dp: Dispatcher):
     async def start_handler(message: types.Message):
-        username = getattr(message.from_user, "username", None) or message.from_user.id
-        print(f"📩 Message from {username}: {message.text}")
         await message.answer("✅ Salom! Bot ishlayapti 🚀")
 
     dp.message.register(start_handler, Command("start"))
@@ -19,7 +17,10 @@ async def register_handlers(dp: Dispatcher):
 async def create_bot(token: str):
     try:
         if token in bots:
-            return {"status": "already_started", "webhook": f"{settings.domain}/webhook/{token}"}
+            return {
+                "status": "already_started",
+                "webhook": f"{settings.domain}/webhook/{token}",
+            }
 
         bot = Bot(token=token)
         dp = Dispatcher()
@@ -53,9 +54,6 @@ async def remove_bot_token(token: str):
             }
 
         bot = Bot(token=token)
-        dp = Dispatcher()
-
-        await register_handlers(dp)
 
         try:
             await bot.delete_webhook(drop_pending_updates=True)

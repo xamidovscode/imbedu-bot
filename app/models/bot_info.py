@@ -6,3 +6,5 @@ class BotInfo(Base):
 
     id = Column(Integer, primary_key=True)
     token = Column(String, unique=True, nullable=False)
+
+
