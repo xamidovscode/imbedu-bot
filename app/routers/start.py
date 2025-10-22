@@ -37,7 +37,7 @@ def build_start_router(
         if not is_joined:
             kb = InlineKeyboardBuilder()
             kb.button(text=join_button_text, url=channel_link)
-            kb.button(text=check_button_text, callback_data="check_sub")
+            kb.button(text=check_button_text, callback_data=f"{r}_check_sub")
             kb.adjust(1)
 
             await message.answer(
@@ -48,7 +48,7 @@ def build_start_router(
 
         await message.answer("✅ Salom! Bot ishlayapti 🚀")
 
-    @r.callback_query(F.data == "check_sub")
+    @r.callback_query(F.data == f"{r}_check_sub")
     async def check_subscription(cb: types.CallbackQuery):
         bot = cb.bot
         user_id = cb.from_user.id
