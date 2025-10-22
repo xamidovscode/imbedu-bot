@@ -4,13 +4,12 @@ from aiogram.filters import Command
 from aiogram.types import Update
 from aiogram.exceptions import TelegramUnauthorizedError
 from app.core.config import settings
+from .main import bots
 
-bots: dict[str, dict] = {}
 
 async def register_handlers(dp: Dispatcher):
     async def start_handler(message: types.Message):
         await message.answer("✅ Salom! Bot ishlayapti 🚀")
-
     dp.message.register(start_handler, Command("start"))
 
 

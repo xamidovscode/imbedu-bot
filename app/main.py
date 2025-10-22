@@ -2,7 +2,7 @@ import asyncio
 from fastapi import FastAPI, Request
 from app.core.db import Base, engine, async_session_maker
 from app.crud.bot_info import get_all_tokens
-from app.services.bot_service import create_bot, handle_webhook
+from app.services.bot_crud import create_bot, handle_webhook
 from app.routes import bots as bot_routes
 
 app = FastAPI(title="Imbedu Dynamic Bots")
@@ -35,6 +35,7 @@ async def startup_event():
                 return False
 
     await asyncio.gather(*(start_one(t) for t in tokens), return_exceptions=True)
+
 
 @app.post("/webhook/{token}")
 async def telegram_webhook(token: str, request: Request):

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas.bot_info import BotTokenSchema
-from app.services.bot_service import create_bot, remove_bot_token
+from app.services.bot_crud import create_bot, remove_bot_token
 from app.core.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.bot_info import add_token, remove_token
