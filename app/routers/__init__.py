@@ -7,5 +7,5 @@ def build_root_router() -> Router:
     CHANNEL_ID = 1
     CHANNEL_LINK = 'https://t.me/imb_edu'
 
-    root.include_router(build_start_router(channel_id=CHANNEL_ID, channel_link=CHANNEL_LINK))
+    root.include_router(build_start_router(channel=CHANNEL_ID, channel_link=CHANNEL_LINK))
     return root
