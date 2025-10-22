@@ -1,5 +1,7 @@
-from aiogram import Dispatcher
-from .start import start_router
+from aiogram import Router
+from .start import build_start_router
 
-def setup_routers(dp: Dispatcher) -> None:
-    dp.include_router(start_router)
+def build_root_router() -> Router:
+    root = Router(name="root")  # bu ham yangi
+    root.include_router(build_start_router())
+    return root

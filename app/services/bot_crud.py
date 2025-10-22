@@ -4,15 +4,8 @@ from aiogram.filters import Command
 from aiogram.types import Update
 from aiogram.exceptions import TelegramUnauthorizedError
 from app.core.config import settings
-from app.routers import setup_routers
+from app.routers import build_root_router
 from .main import bots
-#
-#
-# async def register_handlers(dp: Dispatcher):
-#     async def start_handler(message: types.Message):
-#         await message.answer("✅ Salom! Bot ishlayapti 🚀")
-#     dp.message.register(start_handler, Command("start"))
-#
 
 async def create_bot(token: str):
     try:
@@ -25,8 +18,7 @@ async def create_bot(token: str):
         bot = Bot(token=token)
         dp = Dispatcher()
 
-        # await register_handlers(dp)
-        setup_routers(dp)
+        dp.include_router(build_root_router())
 
         try:
             await bot.delete_webhook(drop_pending_updates=True)
