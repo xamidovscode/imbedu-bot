@@ -1,3 +1,6 @@
+import asyncio
+
+import requests
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.enums import ChatMemberStatus
@@ -27,19 +30,16 @@ class LoginStates(StatesGroup):
 
 
 async def _post_credentials(api_url: str, username: str, password: str, timeout: int = 10):
+    def sync_post():
+        return requests.post(api_url, json={"username": username, "password": password}, timeout=timeout)
+
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                api_url,
-                json={"username": username, "password": password},
-                timeout=timeout
-            ) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return True, data, None
-                else:
-                    text = await resp.text()
-                    return False, None, f"API {resp.status}: {text}"
+        resp = await asyncio.to_thread(sync_post)
+
+        if resp.status_code == 200:
+            return True, resp.json(), None
+        else:
+            return False, None, f"API {resp.status_code}: {resp.text}"
     except Exception as e:
         return False, None, f"API ERROR: {e}"
 
