@@ -16,9 +16,6 @@ async def startup_event():
 
     async with async_session_maker() as session:
         tokens = await get_all_tokens(session)
-
-    print(f"♻️ Found {len(tokens)} tokens in DB — starting bots...")
-
     sem = asyncio.Semaphore(5)
 
     async def start_one(token: str):

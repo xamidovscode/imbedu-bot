@@ -1,31 +1,87 @@
-# app/bot/routers/start.py
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.enums import ChatMemberStatus
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.fsm.context import FSMContext
 from uuid import uuid4
-from typing import Union
+from typing import Union, Optional
+import aiohttp
+import os
 
 ChatRef = Union[int, str]
 
+
+# =========================
+# A'zolikni tekshirish (eski funksiya — o'zgartirmadik)
+# =========================
 async def _is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
     try:
         m = await bot.get_chat_member(chat_id, user_id)
         return m.status in {
-            ChatMemberStatus.MEMBER,
-            ChatMemberStatus.ADMINISTRATOR,
-            ChatMemberStatus.CREATOR,
+            ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.CREATOR,
         }
     except Exception as e:
         print("[_is_member] ERROR:", e)
         return False
 
+
+# =========================
+# FSM holatlari (login jarayoni)
+# =========================
+class LoginStates(StatesGroup):
+    waiting_username = State()
+    waiting_password = State()
+
+
+# =========================
+# API yordamchi funksiya
+# =========================
+async def _post_credentials(api_url: str, username: str, password: str, timeout: int = 10):
+    """
+    username/password ni API ga yuboradi.
+    Muvaffaqiyat: (True, payload, None)
+    Xato:        (False, None, error_text)
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                api_url,
+                json={"username": username, "password": password},
+                timeout=timeout
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return True, data, None
+                else:
+                    text = await resp.text()
+                    return False, None, f"API {resp.status}: {text}"
+    except Exception as e:
+        return False, None, f"API ERROR: {e}"
+
+
+# =========================
+# Router quruvchi (eski imzoni saqladik)
+# =========================
 def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     r = Router(name=f"start_{uuid4().hex[:6]}")
     CH = channel
 
+    # ---- HELPERS ----
+    async def _ask_username(message: types.Message, state: FSMContext):
+        """Login flow’ni boshlash."""
+        # Eski salomlashishni ham chiqaramiz:
+        await message.answer("✅ Salom! Bot ishlayapti 🚀")
+        await message.answer("👤 Iltimos, foydalanuvchi nomini yuboring (yoki /cancel).")
+        await state.set_state(LoginStates.waiting_username)
+
+    async def _ask_username_from_cb(cb: types.CallbackQuery, state: FSMContext):
+        await cb.message.answer("👤 Iltimos, foydalanuvchi nomini yuboring (yoki /cancel).")
+        await state.set_state(LoginStates.waiting_username)
+
+    # ---- /start (eski handler nomi o'zgarishsiz) ----
     @r.message(Command("start"))
-    async def start_handler(message: types.Message):
+    async def start_handler(message: types.Message, state: FSMContext):
         print("[start_handler] /start received from", message.from_user.id)
         bot = message.bot
         user_id = message.from_user.id
@@ -41,10 +97,12 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
             )
             return
 
-        await message.answer("✅ Salom! Bot ishlayapti 🚀")
+        # A'zo bo'lsa — login flow’ni boshlaymiz
+        await _ask_username(message, state)
 
+    # ---- "Tekshirish" callback (eski nomi o'zgarishsiz) ----
     @r.callback_query(lambda c: c.data == "check_sub")
-    async def check_subscription(cb: types.CallbackQuery):
+    async def check_subscription(cb: types.CallbackQuery, state: FSMContext):
         print("[check_subscription] callback from", cb.from_user.id, "data=", cb.data)
         bot = cb.bot
         user_id = cb.from_user.id
@@ -61,11 +119,70 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
                 print("[check_subscription] edit_reply_markup error:", e)
             return
 
+        # A'zo bo'lsa — avvalgi matnni saqlab, so'ng login flow
         try:
             await cb.message.edit_text("✅ Rahmat! Obuna tasdiqlandi.")
         except Exception as e:
             print("[check_subscription] edit_text error:", e)
-        await cb.message.answer("Endi botdan foydalanishingiz mumkin 🚀")
+
         await cb.answer()
+        await _ask_username_from_cb(cb, state)
+
+    # =========================
+    # Qo'shimcha: login FSM handler’lari
+    # =========================
+    @r.message(Command("login"))
+    async def manual_login(message: types.Message, state: FSMContext):
+        """Istalgan vaqtda /login bilan ham boshlash mumkin."""
+        await _ask_username(message, state)
+
+    @r.message(Command("cancel"))
+    async def cancel_flow(message: types.Message, state: FSMContext):
+        await state.clear()
+        await message.answer("❎ Jarayon bekor qilindi. /login orqali qayta boshlashingiz mumkin.")
+
+    @r.message(LoginStates.waiting_username, F.text.len() > 0)
+    async def got_username(message: types.Message, state: FSMContext):
+        username = message.text.strip()
+        await state.update_data(username=username)
+        await message.answer("🔒 Endi parolni yuboring (yoki /cancel).")
+        await state.set_state(LoginStates.waiting_password)
+
+    @r.message(LoginStates.waiting_password, F.text.len() > 0)
+    async def got_password(message: types.Message, state: FSMContext):
+        data = await state.get_data()
+        username = data.get("username")
+        password = message.text.strip()
+
+        api_url: Optional[str] = os.getenv("AUTH_API_URL")
+        if not api_url:
+            await message.answer("⚠️ AUTH_API_URL topilmadi. Administratorga murojaat qiling.")
+            await state.clear()
+            return
+
+        await message.answer("⏳ Tekshirilmoqda...")
+        ok, payload, err = await _post_credentials(api_url, username, password)
+
+        if ok:
+            token = payload.get("token") if isinstance(payload, dict) else None
+            await message.answer(
+                "✅ Muvaffaqiyatli kirdingiz!\n"
+                f"👤 <b>{username}</b>\n"
+                f"🔑 <code>{token or '—'}</code>",
+                parse_mode="HTML",
+            )
+        else:
+            await message.answer(
+                "❌ Login amalga oshmadi.\n"
+                f"Sabab: {err or 'Noma’lum xatolik'}\n"
+                "Iltimos, /login orqali qayta urinib ko‘ring."
+            )
+
+        await state.clear()
+
+    # Agar foydalanuvchi parol holatida matndan boshqa tur yuborsa:
+    @r.message(LoginStates.waiting_password)
+    async def pw_fallback(message: types.Message):
+        await message.answer("Parolni oddiy matn ko‘rinishida yuboring, iltimos. (yoki /cancel)")
 
     return r
