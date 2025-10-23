@@ -124,7 +124,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         username = data.get("username")
         password = message.text.strip()
 
-        api_url = "https://demo.xamidovcoder.uz/webhooks/webhooks/"
+        api_url = "https://demo.xamidovcoder.uz/api/v1/webhooks/webhooks/"
 
         await message.answer("⏳ Tekshirilmoqda...")
         ok, payload, err = await _post_credentials(api_url, username, password)
