@@ -139,7 +139,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         else:
             await message.answer(
                 "❌ Login amalga oshmadi.\n"
-                f"Sabab: {err.get('message') or 'Noma’lum xatolik'}\n"
+                f"Sabab: {err or 'Noma’lum xatolik'}\n"
                 "Iltimos, /login orqali qayta urinib ko‘ring."
             )
 
