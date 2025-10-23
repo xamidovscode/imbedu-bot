@@ -28,19 +28,19 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     @r.message(Command("start"))
     async def start_handler(message: types.Message, state: FSMContext):
         print("[start_handler] /start received from", message.from_user.id)
-        bot = message.bot
-        user_id = message.from_user.id
+        # bot = message.bot
+        # user_id = message.from_user.id
 
-        if not await is_member(bot, channel, user_id):
-            kb = InlineKeyboardBuilder()
-            kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
-            kb.button(text="✅ Tekshirish", callback_data="check_sub")
-            kb.adjust(1)
-            await message.answer(
-                "❗️ Iltimos, kanalga obuna bo‘ling. So‘ng “Tekshirish” tugmasini bosing.",
-                reply_markup=kb.as_markup(),
-            )
-            return
+        # if not await is_member(bot, channel, user_id):
+        #     kb = InlineKeyboardBuilder()
+        #     kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
+        #     kb.button(text="✅ Tekshirish", callback_data="check_sub")
+        #     kb.adjust(1)
+        #     await message.answer(
+        #         "❗️ Iltimos, kanalga obuna bo‘ling. So‘ng “Tekshirish” tugmasini bosing.",
+        #         reply_markup=kb.as_markup(),
+        #     )
+        #     return
 
         await _ask_username(message, state)
 
