@@ -3,45 +3,14 @@ import asyncio
 import requests
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from aiogram.enums import ChatMemberStatus
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+
+from ..utils import is_member, post_credentials
 from uuid import uuid4
-import aiohttp
 
 from app.utils import ChatRef
-
-
-async def _is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
-    try:
-        m = await bot.get_chat_member(chat_id, user_id)
-        return m.status in {
-            ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.CREATOR,
-        }
-    except Exception as e:
-        print("[_is_member] ERROR:", e)
-        return False
-
-
-class LoginStates(StatesGroup):
-    waiting_username = State()
-    waiting_password = State()
-
-
-async def _post_credentials(api_url: str, username: str, password: str, timeout: int = 10):
-    def sync_post():
-        return requests.post(api_url, json={"username": username, "password": password}, timeout=timeout)
-
-    try:
-        resp = await asyncio.to_thread(sync_post)
-
-        if resp.status_code == 200:
-            return True, resp.json(), None
-        else:
-            return False, None, f"API {resp.status_code}: {resp.text}"
-    except Exception as e:
-        return False, None, f"API ERROR: {e}"
+from ..utils.states import LoginStates
 
 
 def build_start_router(channel: ChatRef, channel_link: str) -> Router:
@@ -62,7 +31,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         bot = message.bot
         user_id = message.from_user.id
 
-        if not await _is_member(bot, channel, user_id):
+        if not await is_member(bot, channel, user_id):
             kb = InlineKeyboardBuilder()
             kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
             kb.button(text="✅ Tekshirish", callback_data="check_sub")
@@ -81,7 +50,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         bot = cb.bot
         user_id = cb.from_user.id
 
-        if not await _is_member(bot, channel, user_id):
+        if not await is_member(bot, channel, user_id):
             await cb.answer("Hali obuna bo‘lmagansiz. Avval kanalga qo‘shiling.", show_alert=True)
             kb = InlineKeyboardBuilder()
             kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
@@ -123,10 +92,8 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         username = data.get("username")
         password = message.text.strip()
 
-        api_url = "https://demo.xamidovcoder.uz/api/v1/webhooks/webhooks/"
-
         await message.answer("⏳ Tekshirilmoqda...")
-        ok, payload, err = await _post_credentials(api_url, username, password)
+        ok, payload, err = await post_credentials(username, password, message.from_user)
 
         if ok:
             token = payload.get("token") if isinstance(payload, dict) else None
