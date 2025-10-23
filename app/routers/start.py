@@ -5,16 +5,11 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from uuid import uuid4
-from typing import Union, Optional
 import aiohttp
-import os
 
-ChatRef = Union[int, str]
+from app.utils import ChatRef
 
 
-# =========================
-# A'zolikni tekshirish (eski funksiya — o'zgartirmadik)
-# =========================
 async def _is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
     try:
         m = await bot.get_chat_member(chat_id, user_id)
@@ -26,23 +21,12 @@ async def _is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
         return False
 
 
-# =========================
-# FSM holatlari (login jarayoni)
-# =========================
 class LoginStates(StatesGroup):
     waiting_username = State()
     waiting_password = State()
 
 
-# =========================
-# API yordamchi funksiya
-# =========================
 async def _post_credentials(api_url: str, username: str, password: str, timeout: int = 10):
-    """
-    username/password ni API ga yuboradi.
-    Muvaffaqiyat: (True, payload, None)
-    Xato:        (False, None, error_text)
-    """
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -60,33 +44,25 @@ async def _post_credentials(api_url: str, username: str, password: str, timeout:
         return False, None, f"API ERROR: {e}"
 
 
-# =========================
-# Router quruvchi (eski imzoni saqladik)
-# =========================
 def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     r = Router(name=f"start_{uuid4().hex[:6]}")
-    CH = channel
 
-    # ---- HELPERS ----
     async def _ask_username(message: types.Message, state: FSMContext):
-        """Login flow’ni boshlash."""
-        # Eski salomlashishni ham chiqaramiz:
         await message.answer("✅ Salom! Bot ishlayapti 🚀")
-        await message.answer("👤 Iltimos, foydalanuvchi nomini yuboring (yoki /cancel).")
+        await message.answer("👤 Iltimos, IMB EDU platformasidagi loginingizni kiriting! (yoki /cancel).")
         await state.set_state(LoginStates.waiting_username)
 
     async def _ask_username_from_cb(cb: types.CallbackQuery, state: FSMContext):
         await cb.message.answer("👤 Iltimos, foydalanuvchi nomini yuboring (yoki /cancel).")
         await state.set_state(LoginStates.waiting_username)
 
-    # ---- /start (eski handler nomi o'zgarishsiz) ----
     @r.message(Command("start"))
     async def start_handler(message: types.Message, state: FSMContext):
         print("[start_handler] /start received from", message.from_user.id)
         bot = message.bot
         user_id = message.from_user.id
 
-        if not await _is_member(bot, CH, user_id):
+        if not await _is_member(bot, channel, user_id):
             kb = InlineKeyboardBuilder()
             kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
             kb.button(text="✅ Tekshirish", callback_data="check_sub")
@@ -97,17 +73,15 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
             )
             return
 
-        # A'zo bo'lsa — login flow’ni boshlaymiz
         await _ask_username(message, state)
 
-    # ---- "Tekshirish" callback (eski nomi o'zgarishsiz) ----
     @r.callback_query(lambda c: c.data == "check_sub")
     async def check_subscription(cb: types.CallbackQuery, state: FSMContext):
         print("[check_subscription] callback from", cb.from_user.id, "data=", cb.data)
         bot = cb.bot
         user_id = cb.from_user.id
 
-        if not await _is_member(bot, CH, user_id):
+        if not await _is_member(bot, channel, user_id):
             await cb.answer("Hali obuna bo‘lmagansiz. Avval kanalga qo‘shiling.", show_alert=True)
             kb = InlineKeyboardBuilder()
             kb.button(text="📢 Kanalga obuna bo‘lish", url=channel_link)
@@ -119,7 +93,6 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
                 print("[check_subscription] edit_reply_markup error:", e)
             return
 
-        # A'zo bo'lsa — avvalgi matnni saqlab, so'ng login flow
         try:
             await cb.message.edit_text("✅ Rahmat! Obuna tasdiqlandi.")
         except Exception as e:
@@ -128,9 +101,6 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         await cb.answer()
         await _ask_username_from_cb(cb, state)
 
-    # =========================
-    # Qo'shimcha: login FSM handler’lari
-    # =========================
     @r.message(Command("login"))
     async def manual_login(message: types.Message, state: FSMContext):
         """Istalgan vaqtda /login bilan ham boshlash mumkin."""
@@ -154,11 +124,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         username = data.get("username")
         password = message.text.strip()
 
-        api_url: Optional[str] = os.getenv("AUTH_API_URL")
-        if not api_url:
-            await message.answer("⚠️ AUTH_API_URL topilmadi. Administratorga murojaat qiling.")
-            await state.clear()
-            return
+        api_url = "https://demo.xamidovcoder.uz/webhooks/webhooks/"
 
         await message.answer("⏳ Tekshirilmoqda...")
         ok, payload, err = await _post_credentials(api_url, username, password)
@@ -180,7 +146,6 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
 
         await state.clear()
 
-    # Agar foydalanuvchi parol holatida matndan boshqa tur yuborsa:
     @r.message(LoginStates.waiting_password)
     async def pw_fallback(message: types.Message):
         await message.answer("Parolni oddiy matn ko‘rinishida yuboring, iltimos. (yoki /cancel)")
