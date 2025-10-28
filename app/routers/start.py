@@ -18,7 +18,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
 
     async def _ask_username(message: types.Message, state: FSMContext):
         await message.answer("✅ Assalomaleykum!\n\n Bot IMB TECH jamoasi tomonidan qo'llab quvvatlanmoqda 🚀")
-        await message.answer("👤 Iltimos tizimga kiring! \n\n1. IMB EDU platformasidagi loginingizni kiriting! \n\nBekor qilish uchun: /cancel")
+        await message.answer("👤 Iltimos tizimga kiring! \n\n1. IMB EDU platformasidagi loginingizni yuboring! \n\nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_username)
 
     async def _ask_username_from_cb(cb: types.CallbackQuery, state: FSMContext):
@@ -106,7 +106,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
         else:
             await message.answer(
                 "❌ Login amalga oshmadi.\n"
-                f"Sabab: {err or 'Noma’lum xatolik'}\n"
+                f"Sabab: {err.get("message") or 'Noma’lum xatolik'}\n"
                 "Iltimos, /login orqali qayta urinib ko‘ring."
             )
 
