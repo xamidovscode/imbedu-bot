@@ -18,8 +18,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
 
     async def _ask_username(message: types.Message, state: FSMContext):
         await message.answer("✅ Assalomaleykum! Bot IMB TECH jamoasi tomonidan qo'llab quvvatlanmoqda 🚀")
-        await message.answer("👤 Iltimos , IMB EDU platformasidagi loginingizni kiriting! (yoki /cancel).")
-        await message.answer("👤 Iltimos tizimga kiring! \n1. IMB EDU platformasidagi loginingizni kiriting! \nBekor qilish uchun: /cancel")
+        await message.answer("👤 Iltimos tizimga kiring! \n\n1. IMB EDU platformasidagi loginingizni kiriting! \n\nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_username)
 
     async def _ask_username_from_cb(cb: types.CallbackQuery, state: FSMContext):
@@ -78,13 +77,13 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     @r.message(Command("cancel"))
     async def cancel_flow(message: types.Message, state: FSMContext):
         await state.clear()
-        await message.answer("❎ Jarayon bekor qilindi. /login orqali qayta boshlashingiz mumkin.")
+        await message.answer("❎ Jarayon bekor qilindi. \n\nQayta ishga tushirish uchun: /login")
 
     @r.message(LoginStates.waiting_username, F.text.len() > 0)
     async def got_username(message: types.Message, state: FSMContext):
         username = message.text.strip()
         await state.update_data(username=username)
-        await message.answer("🔒 Endi parolni yuboring! \nBekor qilish uchun: /cancel")
+        await message.answer("🔒 Endi parolni yuboring! \n\nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_password)
 
     @r.message(LoginStates.waiting_password, F.text.len() > 0)
