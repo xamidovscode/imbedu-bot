@@ -19,7 +19,7 @@ async def is_member(bot, chat_id: ChatRef, user_id: int) -> bool:
 
 async def post_credentials(username: str, password: str, from_user, timeout: int = 10):
     def sync_post():
-        api_url = "https://demo.xamidovcoder.uz/api/v1/webhooks/webhooks/"
+        api_url = "https://demo.xamidovcoder.uz/api/v1/webhooks/bot-updates/"
         return requests.post(
             api_url,
             json={
