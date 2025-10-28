@@ -17,8 +17,9 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     r = Router(name=f"start_{uuid4().hex[:6]}")
 
     async def _ask_username(message: types.Message, state: FSMContext):
-        await message.answer("✅ Salom! Bot ishlayapti 🚀")
-        await message.answer("👤 Iltimos, IMB EDU platformasidagi loginingizni kiriting! (yoki /cancel).")
+        await message.answer("✅ Assalomaleykum! Bot IMB TECH jamoasi tomonidan qo'llab quvvatlanmoqda 🚀")
+        await message.answer("👤 Iltimos , IMB EDU platformasidagi loginingizni kiriting! (yoki /cancel).")
+        await message.answer("👤 Iltimos tizimga kiring! \n1. IMB EDU platformasidagi loginingizni kiriting! \nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_username)
 
     async def _ask_username_from_cb(cb: types.CallbackQuery, state: FSMContext):
@@ -83,7 +84,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     async def got_username(message: types.Message, state: FSMContext):
         username = message.text.strip()
         await state.update_data(username=username)
-        await message.answer("🔒 Endi parolni yuboring (yoki /cancel).")
+        await message.answer("🔒 Endi parolni yuboring! \nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_password)
 
     @r.message(LoginStates.waiting_password, F.text.len() > 0)

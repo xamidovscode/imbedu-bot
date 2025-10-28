@@ -9,14 +9,11 @@ from app.crud.bot_info import add_token, remove_token
 router = APIRouter(prefix="/bots", tags=["Bots"])
 
 @router.post("/create")
-async def start_bot(
-        body: BotTokenSchema, session: AsyncSession = Depends(get_db)
-):
+async def start_bot(body: BotTokenSchema, session: AsyncSession = Depends(get_db)):
     token = body.token.strip()
 
     if not token:
         return {"error": "token required"}
-
 
     result = await create_bot(token)
     if isinstance(result, dict) and "error" in result:
@@ -28,7 +25,6 @@ async def start_bot(
     except Exception as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to save token") from e
-
     return result
 
 @router.post("/remove")
