@@ -37,6 +37,6 @@ async def post_credentials(username: str, password: str, from_user, timeout: int
         if resp.status_code == 200:
             return True, resp.json(), None
         else:
-            return False, None, f"API {resp.status_code}: {resp.text}"
+            return False, None, resp.json()
     except Exception as e:
         return False, None, f"API ERROR: {e}"
