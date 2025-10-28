@@ -17,7 +17,7 @@ def build_start_router(channel: ChatRef, channel_link: str) -> Router:
     r = Router(name=f"start_{uuid4().hex[:6]}")
 
     async def _ask_username(message: types.Message, state: FSMContext):
-        await message.answer("✅ Assalomaleykum! Bot IMB TECH jamoasi tomonidan qo'llab quvvatlanmoqda 🚀")
+        await message.answer("✅ Assalomaleykum!\n\n Bot IMB TECH jamoasi tomonidan qo'llab quvvatlanmoqda 🚀")
         await message.answer("👤 Iltimos tizimga kiring! \n\n1. IMB EDU platformasidagi loginingizni kiriting! \n\nBekor qilish uchun: /cancel")
         await state.set_state(LoginStates.waiting_username)
 
