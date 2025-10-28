@@ -32,9 +32,7 @@ async def start_bot(
     return result
 
 @router.post("/remove")
-async def remove_bot(
-        body: BotTokenSchema, session: AsyncSession = Depends(get_db)
-):
+async def remove_bot(body: BotTokenSchema, session: AsyncSession = Depends(get_db)):
     token = body.token.strip()
     if not token:
         return {"error": "token required"}
